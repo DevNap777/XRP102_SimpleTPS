@@ -29,6 +29,7 @@ namespace DesignPattern
             }
             else
             {
+                // as T를 해줘야 이 singleton을 상속받게 할 수 있음
                 _instance = this as T;
                 DontDestroyOnLoad(_instance);
             }
