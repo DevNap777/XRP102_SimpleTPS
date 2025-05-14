@@ -20,7 +20,7 @@ public class PlayerStatus : MonoBehaviour
 
     public float RotateSpeed { get; set; }
 
-    public ObservableProperty<bool> ISAiming { get; private set; } = new();
-    public ObservableProperty<bool> ISMoving { get; private set; } = new();
-    public ObservableProperty<bool> ISAttacking { get; private set; } = new();
+    public ObservableProperty<bool> IsAiming { get; private set; } = new();
+    public ObservableProperty<bool> IsMoving { get; private set; } = new();
+    public ObservableProperty<bool> IsAttacking { get; private set; } = new();
 }
