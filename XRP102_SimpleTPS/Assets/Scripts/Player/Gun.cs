@@ -27,6 +27,7 @@ public class Gun : MonoBehaviour
     private void Init()
     {
         _camera = Camera.main;
+        _impulse = GetComponent<CinemachineImpulseSource>();
     }
 
     // 아래의 모든 것들을 관리해줄 핸들러
