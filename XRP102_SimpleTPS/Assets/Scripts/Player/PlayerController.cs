@@ -5,7 +5,7 @@ using Cinemachine;
 using TMPro;
 using UnityEngine.UI;
 
-public class PlayerController : MonoBehaviour
+public class PlayerController : MonoBehaviour, IDamagable
 {
     public bool IsControlActivate { get; set; } = true;
 
@@ -17,6 +17,7 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private CinemachineVirtualCamera _aimCamera;
     [SerializeField] private Gun _gun;
     [SerializeField] private Animator _aimAnimator;
+    [SerializeField] private HPGuageUI _hpUI;
 
     [SerializeField] private KeyCode _aimKey = KeyCode.Mouse1;
     [SerializeField] private KeyCode _shootKey = KeyCode.Mouse0;
@@ -36,7 +37,11 @@ public class PlayerController : MonoBehaviour
         //_mainCamera = Camera.main.gameObject;
         _animator = GetComponent<Animator>();
         _aimImage = _aimAnimator.GetComponent<Image>();
-    }
+
+        // Test Code-----------------
+        //_hpUI.SetImageFillAmount(1);
+        //_status.CurrentHp.Value = _status.MaxHP;
+    }   
 
     // 플레이어 조작 메인 함수
     private void HandlePlayerControl()
@@ -46,6 +51,17 @@ public class PlayerController : MonoBehaviour
         HandleMovement();
         HandleAiming();
         HandleShooting();
+
+        // Test Code-----------------
+        //if (Input.GetKey(KeyCode.Alpha1))
+        //{
+        //    _status.CurrentHp.Value--;
+        //}
+        //
+        //if (Input.GetKey(KeyCode.Alpha2))
+        //{
+        //    _status.CurrentHp.Value++;
+        //}
     }
 
     private void HandleShooting()
@@ -101,8 +117,34 @@ public class PlayerController : MonoBehaviour
         _status.IsAiming.Value = Input.GetKey(_aimKey);
     }
 
+    public void TakeDamage(int value)
+    {
+        // 체력을 떨어뜨리되, 체력이 0 이하가 되면 플레이어가 죽도록 처리함
+        _status.CurrentHp.Value -= value;
+
+        if (_status.CurrentHp.Value <= 0)
+        {
+            Dead();
+        }
+    }
+
+    public void RecoveryHp(int value)
+    {
+        // 체력을 회복시키되, MaxHp 초과가 되는 것을 막아야 함.
+        int hp = _status.CurrentHp.Value + value;
+
+        _status.CurrentHp.Value = Mathf.Clamp(hp, 0, _status.MaxHP);
+    }
+
+    public void Dead()
+    {
+        // TODO : 주말 동안 만들어보기, 스테이터스는 어떻게 할지
+        Debug.Log("플레이어 사망 처리");
+    }
+
     public void SubscribeEvents()
     {
+        _status.CurrentHp.Subscribe(SetHPUIGuage);
         _status.IsMoving.Subscribe(SetMoveAnimation);
 
         _status.IsAiming.Subscribe(_aimCamera.gameObject.SetActive);
@@ -112,6 +154,7 @@ public class PlayerController : MonoBehaviour
 
     public void UnsubscribeEvents()
     {
+        _status.CurrentHp.Unsubscribe(SetHPUIGuage);
         _status.IsMoving.Unsubscribe(SetMoveAnimation);
 
         _status.IsAiming.Unsubscribe(_aimCamera.gameObject.SetActive);
@@ -132,4 +175,10 @@ public class PlayerController : MonoBehaviour
     private void SetMoveAnimation(bool value) => _animator.SetBool("IsMove", value);
     private void SetAttackAnimation(bool value) => _animator.SetBool("IsAttack", value);
    
+    private void SetHPUIGuage(int currentHp)
+    {
+        float hp = currentHp / _status.MaxHP;
+        _hpUI.SetImageFillAmount(hp);
+    }
+  
 }
