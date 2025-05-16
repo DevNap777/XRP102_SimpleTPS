@@ -14,6 +14,7 @@ public class PlayerController : MonoBehaviour
 
     [SerializeField] private CinemachineVirtualCamera _aimCamera;
     [SerializeField] private Gun _gun;
+    [SerializeField] private Animator _aimAnimator;
 
     [SerializeField] private KeyCode _aimKey = KeyCode.Mouse1;
     [SerializeField] private KeyCode _shootKey = KeyCode.Mouse0;
@@ -115,7 +116,12 @@ public class PlayerController : MonoBehaviour
         _status.IsAttacking.Unsubscribe(SetAttackAnimation);
     }
 
-    private void SetAimAnimation(bool value) => _animator.SetBool("IsAim", value);
+    private void SetAimAnimation(bool value)
+    {
+        _animator.SetBool("IsAim", value);
+        _aimAnimator.SetBool("IsAim", value);
+    }
     private void SetMoveAnimation(bool value) => _animator.SetBool("IsMove", value);
     private void SetAttackAnimation(bool value) => _animator.SetBool("IsAttack", value);
+   
 }
