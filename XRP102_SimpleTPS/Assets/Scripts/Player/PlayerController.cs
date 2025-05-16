@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Cinemachine;
 using TMPro;
+using UnityEngine.UI;
 
 public class PlayerController : MonoBehaviour
 {
@@ -11,6 +12,7 @@ public class PlayerController : MonoBehaviour
     private PlayerStatus _status;
     private PlayerMovement _movement;
     private Animator _animator;
+    private Image _aimImage;
 
     [SerializeField] private CinemachineVirtualCamera _aimCamera;
     [SerializeField] private Gun _gun;
@@ -33,6 +35,7 @@ public class PlayerController : MonoBehaviour
         _movement = GetComponent<PlayerMovement>();
         //_mainCamera = Camera.main.gameObject;
         _animator = GetComponent<Animator>();
+        _aimImage = _aimAnimator.GetComponent<Image>();
     }
 
     // 플레이어 조작 메인 함수
@@ -118,8 +121,13 @@ public class PlayerController : MonoBehaviour
 
     private void SetAimAnimation(bool value)
     {
+        if (!_aimImage.enabled)
+        {
+            _aimImage.enabled = true;
+        }
         _animator.SetBool("IsAim", value);
         _aimAnimator.SetBool("IsAim", value);
+
     }
     private void SetMoveAnimation(bool value) => _animator.SetBool("IsMove", value);
     private void SetAttackAnimation(bool value) => _animator.SetBool("IsAttack", value);
