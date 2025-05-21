@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 // 어떤 클래스에서
 // 외부에 공개될 것들은 어떤 것들이 있는지
@@ -23,6 +24,8 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField][Range(0, 5)] private float _mouseSensitivity = 1;
 
     private Vector2 _currentRotation;
+    public Vector2 InputDirection { get; private set; }
+    public Vector2 MouseDirection { get; private set; }
 
     private void Awake()
     {
@@ -47,13 +50,13 @@ public class PlayerMovement : MonoBehaviour
     // Aim 회전
     public Vector3 SetAimRotation()
     {
-        Vector2 mouseDirection = GetMouseDirection();
+        //Vector2 mouseDirection = GetMouseDirection();
 
         // x축의 경우라면 제한을 걸 필요 없음.
-        _currentRotation.x += mouseDirection.x;
+        _currentRotation.x += MouseDirection.x;
 
         // y축의 경우엔 각도 제한을 걸어야 함.
-        _currentRotation.y = Mathf.Clamp(_currentRotation.y + mouseDirection.y, _minPitch, _maxPitch);
+        _currentRotation.y = Mathf.Clamp(_currentRotation.y + MouseDirection.y, _minPitch, _maxPitch);
 
         // 캐릭터 오브젝트의 경우에는 Y축 회전만 반영
         transform.rotation = Quaternion.Euler(0, _currentRotation.x, 0);
@@ -82,37 +85,51 @@ public class PlayerMovement : MonoBehaviour
         _avatar.rotation = Quaternion.Lerp(_avatar.rotation, targetRotation, _playerStatus.RotateSpeed * Time.deltaTime);
     }
 
-    // 마우스는 x, y만 있으므로 Vector2 사용
-    private Vector2 GetMouseDirection()
-    {
-        float mouseX = Input.GetAxis("Mouse X") * _mouseSensitivity;
-        // -로 하고 곱해줘야 원하는 방향으로 움직임
-        float mouseY = -Input.GetAxis("Mouse Y") * _mouseSensitivity;
-
-        return new Vector2(mouseX, mouseY);
-    }
-
     public Vector3 GetMoveDirection()
     {
-        Vector3 input = GetInputDirection();
-
+        //Vector2 input = InputDirection;
+    
         Vector3 direction = 
             // 옆 방향
-            (transform.right * input.x) + 
+            (transform.right * InputDirection.x) + 
             // 앞 방향
-            (transform.forward * input.z);
-
+            (transform.forward * InputDirection.y);
+    
         // 정규화
         return direction.normalized;
     }
-
-    public Vector3 GetInputDirection()
+  
+    // Input System 사용시 설정한 이름 Move 앞에 On만 붙이면 호출됨
+    public void OnMove(InputValue value)
     {
-        // 게임패드가 들어가면 GetAxis로 변경
-        float x = Input.GetAxisRaw("Horizontal");
-        float z = Input.GetAxisRaw("Vertical");
-
-        // 현재 점프가 없으니 y는 지정 안 함
-        return new Vector3(x, 0, z);
+        InputDirection = value.Get<Vector2>();
     }
+
+    public void OnRotate(InputValue value)
+    {
+        Vector2 mouseDir = value.Get<Vector2>();
+        mouseDir.y *= -1;
+        MouseDirection = mouseDir * _mouseSensitivity;
+    }
+
+
+    //public Vector3 GetInputDirection()
+    //{
+    //    // 게임패드가 들어가면 GetAxis로 변경
+    //    float x = Input.GetAxisRaw("Horizontal");
+    //    float z = Input.GetAxisRaw("Vertical");
+    //
+    //    // 현재 점프가 없으니 y는 지정 안 함
+    //    return new Vector3(x, 0, z);
+    //}
+
+    // 마우스는 x, y만 있으므로 Vector2 사용
+    //private Vector2 GetMouseDirection()
+    //{
+    //    float mouseX = Input.GetAxis("Mouse X") * _mouseSensitivity;
+    //    // -로 하고 곱해줘야 원하는 방향으로 움직임
+    //    float mouseY = -Input.GetAxis("Mouse Y") * _mouseSensitivity;
+    //
+    //    return new Vector2(mouseX, mouseY);
+    //}
 }

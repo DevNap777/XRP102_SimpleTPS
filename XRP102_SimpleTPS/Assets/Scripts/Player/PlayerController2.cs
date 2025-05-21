@@ -4,9 +4,17 @@ using UnityEngine;
 using Cinemachine;
 using TMPro;
 using UnityEngine.UI;
+using UnityEngine.InputSystem;
 
 public class PlayerController : MonoBehaviour, IDamagable
 {
+    [SerializeField] private InputAction _testKey;
+
+    private void TestMethod(InputAction.CallbackContext ctx)
+    {
+        Debug.Log("!!!!");
+    }
+
     public bool IsControlActivate { get; set; } = true;
 
     private PlayerStatus _status;
@@ -18,6 +26,8 @@ public class PlayerController : MonoBehaviour, IDamagable
     [SerializeField] private Gun _gun;
     [SerializeField] private Animator _aimAnimator;
     [SerializeField] private HPGuageUI _hpUI;
+    private InputAction _aimInputAction;
+    private InputAction _shootInputAction;
 
     [SerializeField] private KeyCode _aimKey = KeyCode.Mouse1;
     [SerializeField] private KeyCode _shootKey = KeyCode.Mouse0;
@@ -37,6 +47,7 @@ public class PlayerController : MonoBehaviour, IDamagable
         //_mainCamera = Camera.main.gameObject;
         _animator = GetComponent<Animator>();
         _aimImage = _aimAnimator.GetComponent<Image>();
+        _aimInputAction = GetComponent<PlayerInput>().actions["Aim"];
 
         // Test Code-----------------
         //_hpUI.SetImageFillAmount(1);
@@ -49,7 +60,7 @@ public class PlayerController : MonoBehaviour, IDamagable
         if (!IsControlActivate) return;
 
         HandleMovement();
-        HandleAiming();
+        // HandleAiming();
         HandleShooting();
 
         // Test Code-----------------
@@ -64,10 +75,17 @@ public class PlayerController : MonoBehaviour, IDamagable
         //}
     }
 
-    private void HandleShooting()
+    //private void HandleShooting()
+    public void HandleShooting()
     {
         // Aim상태이고 키까지 눌리면 수행
-        if (_status.IsAttacking.Value && Input.GetKey(_shootKey))
+        //if (_status.IsAttacking.Value && Input.GetKey(_shootKey))
+
+        // _shootInputAction.WasPressedThisFrame() => 이번 프레임에 눌렸는가? (GetKeyDown)
+        // _shootInputAction.WasReleaseddThisFrame() => 이번 프레임에 떼어졌는가? (GetKeyUp)
+        // _shootInputAction.IsPressed() => 지금 눌려졌는가? (GetKey)
+
+        if (_status.IsAttacking.Value && _shootInputAction.IsPressed())
         {
             _status.IsAttacking.Value = _gun.Shoot();
         }
@@ -106,15 +124,27 @@ public class PlayerController : MonoBehaviour, IDamagable
         // Aim 상태일 때만
         if (_status.IsAiming.Value)
         {
-            Vector3 input = _movement.GetInputDirection();
-            _animator.SetFloat("X", input.x);
-            _animator.SetFloat("Z", input.z);
+            //Vector3 input = _movement.GetInputDirection();
+            //_animator.SetFloat("X", input.x);
+            //_animator.SetFloat("Z", input.z);
+
+            _animator.SetFloat("X", _movement.InputDirection.x);
+            _animator.SetFloat("Z", _movement.InputDirection.y);
         }
     }
 
-    private void HandleAiming()
+    private void HandleAiming(InputAction.CallbackContext ctx)
     {
-        _status.IsAiming.Value = Input.GetKey(_aimKey);
+        // _status.IsAiming.Value = Input.GetKey(_aimKey);
+
+        // 눌린 상태로 유지하고 싶다면?
+        // 1. Key Down 상황일때 => 키 입력이 시작된 시점인지 체크
+        // 2. Key Up 상황일때 => 키 입력이 시작된 시점인지 체크
+        _status.IsAiming.Value = ctx.started;
+
+        // ctx.started => 키 입력이 시작됐는지 판별
+        // ctx.performed => 키 입력이 진행중인지 판별
+        // ctx.canceled => 키 입력이 취소됐는지(떼어졌는지) 판별
     }
 
     public void TakeDamage(int value)
@@ -150,6 +180,11 @@ public class PlayerController : MonoBehaviour, IDamagable
         _status.IsAiming.Subscribe(_aimCamera.gameObject.SetActive);
         _status.IsAiming.Subscribe(SetAimAnimation);
         _status.IsAttacking.Subscribe(SetAttackAnimation);
+
+        // inputs ----
+        _aimInputAction.Enable();
+        _aimInputAction.started += HandleAiming;
+        _aimInputAction.canceled += HandleAiming;
     }
 
     public void UnsubscribeEvents()
@@ -160,6 +195,11 @@ public class PlayerController : MonoBehaviour, IDamagable
         _status.IsAiming.Unsubscribe(_aimCamera.gameObject.SetActive);
         _status.IsAiming.Unsubscribe(SetAimAnimation);
         _status.IsAttacking.Unsubscribe(SetAttackAnimation);
+
+        // inputs ----
+        _aimInputAction.Disable();
+        _aimInputAction.started -= HandleAiming;
+        _aimInputAction.canceled -= HandleAiming;
     }
 
     private void SetAimAnimation(bool value)
